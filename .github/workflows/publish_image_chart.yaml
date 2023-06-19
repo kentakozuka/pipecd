@@ -1,17 +1,11 @@
 name: publish
 
-on:
-  push:
-    branches:
-      - master
-    tags:
-      - 'v*'
+on: [workflow_dispatch]
 
 env:
   GHCR: ghcr.io
-  GCR: gcr.io
   HELM_VERSION: 3.8.2
-  GO_VERSION: 1.20.5
+  GO_VERSION: 1.20.3
   NODE_VERSION: 16.13.0
 
 jobs:
@@ -62,13 +56,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to GCR
-        uses: docker/login-action@49ed152c8eca782a232dede0303416e8f356c37b #v2.0.0
-        with:
-          registry: ${{ env.GCR }}
-          username: _json_key
-          password: ${{ secrets.GCR_SA }}
-
       # Building and pushing container images.
       - name: Build and push pipecd image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
@@ -76,7 +63,7 @@ jobs:
           push: true
           context: .
           file: cmd/pipecd/Dockerfile
-          tags: ${{ env.GHCR }}/pipe-cd/pipecd:${{ env.PIPECD_VERSION }}
+          tags: ${{ env.GHCR }}/kentakozuka/pipecd:${{ env.PIPECD_VERSION }}
       - name: Build and push piped image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
@@ -84,15 +71,14 @@ jobs:
           context: .
           file: cmd/piped/Dockerfile
           tags: |
-            ${{ env.GHCR }}/pipe-cd/piped:${{ env.PIPECD_VERSION }}
-            ${{ env.GCR }}/pipecd/piped:${{ env.PIPECD_VERSION }}
+            ${{ env.GHCR }}/kentakozuka/piped:${{ env.PIPECD_VERSION }}
       - name: Build and push piped-okd image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           push: true
           context: .
           file: cmd/piped/Dockerfile-okd
-          tags: ${{ env.GHCR }}/pipe-cd/piped-okd:${{ env.PIPECD_VERSION }}
+          tags: ${{ env.GHCR }}/kentakozuka/piped-okd:${{ env.PIPECD_VERSION }}
       - name: Build and push launcher image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
@@ -100,22 +86,21 @@ jobs:
           context: .
           file: cmd/launcher/Dockerfile
           tags: |
-            ${{ env.GHCR }}/pipe-cd/launcher:${{ env.PIPECD_VERSION }}
-            ${{ env.GCR }}/pipecd/launcher:${{ env.PIPECD_VERSION }}
+            ${{ env.GHCR }}/kentakozuka/launcher:${{ env.PIPECD_VERSION }}
       - name: Build and push launcher-okd image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           push: true
           context: .
           file: cmd/launcher/Dockerfile-okd
-          tags: ${{ env.GHCR }}/pipe-cd/launcher-okd:${{ env.PIPECD_VERSION }}
+          tags: ${{ env.GHCR }}/kentakozuka/launcher-okd:${{ env.PIPECD_VERSION }}
       - name: Build and push pipectl image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           push: true
           context: .
           file: cmd/pipectl/Dockerfile
-          tags: ${{ env.GHCR }}/pipe-cd/pipectl:${{ env.PIPECD_VERSION }}
+          tags: ${{ env.GHCR }}/kentakozuka/pipectl:${{ env.PIPECD_VERSION }}
       - name: Build and push helloworld image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
@@ -123,29 +108,19 @@ jobs:
           context: .
           file: cmd/helloworld/Dockerfile
           tags: |
-            ${{ env.GHCR }}/pipe-cd/helloworld:${{ env.PIPECD_VERSION }}
-            ${{ env.GCR }}/pipecd/helloworld:${{ env.PIPECD_VERSION }}
+            ${{ env.GHCR }}/kentakozuka/helloworld:${{ env.PIPECD_VERSION }}
 
       # Building and pushing Helm charts.
-      - name: Install helm
-        uses: Azure/setup-helm@v1
-        with:
-          version: ${{ env.HELM_VERSION }}
-      - name: Login to OCI using Helm
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.GHCR }} --username ${{ github.repository_owner }} --password-stdin
-      - name: Publish helm charts
-        run: |
-          make build/chart VERSION=${{ env.PIPECD_VERSION }}
-          helm push .artifacts/pipecd-${{ env.PIPECD_VERSION }}.tgz oci://${{ env.GHCR }}/pipe-cd/chart
-          helm push .artifacts/piped-${{ env.PIPECD_VERSION }}.tgz oci://${{ env.GHCR }}/pipe-cd/chart
-          helm push .artifacts/helloworld-${{ env.PIPECD_VERSION }}.tgz oci://${{ env.GHCR }}/pipe-cd/chart
-
-      # Notify PipeCD to trigger deployment via EventWatcher.
-      - uses: pipe-cd/actions-event-register@v1
-        with:
-          api-address: ${{ secrets.PIPECD_API_ADDRESS }}
-          api-key: ${{ secrets.PIPECD_API_KEY }}
-          event-name: helm-release
-          labels: helmRepo=pipecd
-          data: ${{ env.PIPECD_VERSION }}
+      # - name: Install helm
+      #   uses: Azure/setup-helm@v1
+      #   with:
+      #     version: ${{ env.HELM_VERSION }}
+      # - name: Login to OCI using Helm
+      #   run: |
+      #     echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.GHCR }} --username ${{ github.repository_owner }} --password-stdin
+      # - name: Publish helm charts
+      #   run: |
+      #     make build/chart VERSION=${{ env.PIPECD_VERSION }}
+      #     helm push .artifacts/pipecd-${{ env.PIPECD_VERSION }}.tgz oci://${{ env.GHCR }}/kentakozuka/chart
+      #     helm push .artifacts/piped-${{ env.PIPECD_VERSION }}.tgz oci://${{ env.GHCR }}/kentakozuka/chart
+      #     helm push .artifacts/helloworld-${{ env.PIPECD_VERSION }}.tgz oci://${{ env.GHCR }}/kentakozuka/chart

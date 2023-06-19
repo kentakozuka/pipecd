@@ -1,11 +1,6 @@
-name: publish
+name: publish-tool
 
-on:
-  push:
-    branches:
-      - master
-    tags:
-      - 'v*'
+on: [workflow_dispatch]
 
 env:
   GHCR: ghcr.io
@@ -31,44 +26,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # Building and pushing container images.
-      - name: Build and push actions-gh-release image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
-        with:
-          context: tool/actions-gh-release
-          tags: ${{ env.GHCR }}/pipe-cd/actions-gh-release:${{ env.PIPECD_VERSION }}
-          push: true
-
-      - name: Build and push actions-plan-preview image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
-        with:
-          context: tool/actions-plan-preview
-          tags: ${{ env.GHCR }}/pipe-cd/actions-plan-preview:${{ env.PIPECD_VERSION }}
-          push: true
-
-      - name: Build and push codegen image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
-        with:
-          context: tool/codegen
-          tags: ${{ env.GHCR }}/pipe-cd/codegen:${{ env.PIPECD_VERSION }}
-          push: true
-
       - name: Build and push piped-base image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: tool/piped-base
-          tags: ${{ env.GHCR }}/pipe-cd/piped-base:${{ env.PIPECD_VERSION }}
-          push: true
-
-      - name: Build and push piped-base-okd image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
-        with:
-          context: tool/piped-base-okd
-          tags: ${{ env.GHCR }}/pipe-cd/piped-base-okd:${{ env.PIPECD_VERSION }}
-          push: true
-
-      - name: Build and push firestore-emulator image
-        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
-        with:
-          context: tool/firestore-emulator
-          tags: ${{ env.GHCR }}/pipe-cd/firestore-emulator:${{ env.PIPECD_VERSION }}
+          tags: ${{ env.GHCR }}/kentakozuka/piped-base:${{ env.PIPECD_VERSION }}
           push: true
