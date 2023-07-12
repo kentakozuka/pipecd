@@ -1,6 +1,10 @@
 {
   "image": "mcr.microsoft.com/devcontainers/universal:2",
   "features": {
-		"golang": "1.20.5"
+		"golang": "1.20.5",
+		"ghcr.io/devcontainers/features/hugo:1": {
+			"version": "v0.92.1",
+			"extended": true
+		}
   }
 }
